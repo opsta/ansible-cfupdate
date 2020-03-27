@@ -1,0 +1,10 @@
+---
+# cfupdate_api_token: CHANGEME
+# cfupdate_zone_name: example.com
+# cfupdate_record_name_array:
+#   - nexus.example.com
+#   - registry.example.com
+
+cfupdate_service_name: cfupdate
+cfupdate_systemd_file_path: "/etc/systemd/system/{{ cfupdate_service_name }}.service"
+cfupdate_script_path: /usr/local/bin/cfupdate

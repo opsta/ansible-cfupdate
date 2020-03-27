@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  author: jirayut
+  description: Ansible role to install and configure Cloudflare DNS Update
+  company: "Opsta (Thailand) Co., Tld."
+  license: "MIT"
+  min_ansible_version: 2.5
+  platforms:
+  - name: Ubuntu
+    versions:
+    - trusty
+    - xenial
+  galaxy_tags:
+    - cloudflare
+    - dns
+dependencies: []

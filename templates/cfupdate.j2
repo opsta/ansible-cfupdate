@@ -1,0 +1,75 @@
+#!/bin/bash
+
+set -e
+
+# Created by benkulbertis/cloudflare-update-record.sh
+# Grab from here https://gist.github.com/benkulbertis/fff10759c2391b6618dd#gistcomment-3048154
+# CHANGE THESE
+api_token="{{ cfupdate_api_token }}" # found in cloudflare account my profile - API Tokens - (Permission Zone.Zone, Zone.DNS)
+zone_name="{{ cfupdate_zone_name }}"
+record_name_array=( {% for record in cfupdate_records %}"{{ record }}" {% endfor %})  # Which record(s) you want to be synced
+proxied="false"
+
+# MAYBE CHANGE THESE
+ip=$(curl -s http://ipv4.icanhazip.com)
+ip_file="ip.txt"
+id_file="cloudflare.ids"
+log_file="cloudflare.log"
+
+# LOGGER
+log() {
+    if [ "$1" ]; then
+        echo -e "[$(date)] - $1" >> $log_file
+    fi
+}
+
+# SCRIPT START
+log "Check Initiated"
+
+for record_name in "${record_name_array[@]}"
+do
+
+  if ! [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+      message="Fetched IP does not look valid! Quitting"
+      log "$message"
+      echo -e "$message"
+      exit 1 
+  fi
+
+  if [ -f $ip_file ]; then
+      old_ip=$(cat $ip_file)
+      if [ $ip == $old_ip ]; then
+          echo "IP has not changed."
+          exit 0
+      fi
+  fi
+
+  if [ -f $id_file ] && [ $(wc -l $id_file | cut -d " " -f 1) == 2 ]; then
+      zone_identifier=$(head -1 $id_file)
+      record_identifier=$(tail -1 $id_file)
+  else
+      zone_identifier=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=$zone_name" -H "Authorization: Bearer $api_token" -H "Content-Type: application/json" | grep -Po '(?<="id":")[^"]*' | head -1 )
+      record_identifier=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$zone_identifier/dns_records?name=$record_name" -H "Authorization: Bearer $api_token" -H "Content-Type: application/json"  | grep -Po '(?<="id":")[^"]*')
+      echo "$zone_identifier" > $id_file
+      echo "$record_identifier" >> $id_file
+  fi
+
+  echo "zone : $zone_identifier"
+  echo "record : $record_identifier"
+
+  update=$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$zone_identifier/dns_records/$record_identifier" -H "Authorization: Bearer $api_token" -H "Content-Type: application/json" --data "{\"id\":\"$zone_identifier\",\"type\":\"A\",\"proxied\":$proxied,\"name\":\"$record_name\",\"content\":\"$ip\"}")
+
+  case "$update" in
+    *"\"success\":false"*)
+      message="API UPDATE FAILED. DUMPING RESULTS:\n$update"
+      log "$message"
+      echo -e "$message"
+      exit 1;;
+    *)
+        message="IP changed to: $ip"
+      echo "$ip" > $ip_file
+      log "$message"
+      echo "$message";;
+  esac
+
+done

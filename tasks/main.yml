@@ -1,0 +1,2 @@
+---
+- include_tasks: cfupdate_install.yml

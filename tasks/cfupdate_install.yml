@@ -1,0 +1,18 @@
+---
+- name: Install cfupdate shell script
+  template:
+    src: cfupdate.j2
+    dest: "{{ cfupdate_script_path }}"
+    mode: '0755'
+
+- name: Install cfupdate systemd service
+  template:
+    src: cfupdate.service.j2
+    dest: "{{ cfupdate_systemd_file_path }}"
+
+- name: Ensure {{ cfupdate_service_name }} service started and start up at boot
+  service:
+    name: "{{ cfupdate_service_name }}"
+    state: started
+    enabled: yes
+    daemon_reload: yes

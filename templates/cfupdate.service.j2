@@ -1,0 +1,10 @@
+[Unit]
+Description=Cloudflare DDNS service
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart={{ cfupdate_script_path }}
+
+[Install]
+WantedBy=multi-user.target
