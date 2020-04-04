@@ -7,11 +7,13 @@ set -e
 # CHANGE THESE
 api_token="{{ cfupdate_api_token }}" # found in cloudflare account my profile - API Tokens - (Permission Zone.Zone, Zone.DNS)
 zone_name="{{ cfupdate_zone_name }}"
-record_name_array=( {% for record in cfupdate_records %}"{{ record }}" {% endfor %})  # Which record(s) you want to be synced
+record_name_array=( {% for record in cfupdate_record_name_array %}"{{ record }}" {% endfor %})  # Which record(s) you want to be synced
 proxied="false"
 
 # MAYBE CHANGE THESE
-ip=$(curl -s http://ipv4.icanhazip.com)
+ip_private=$(ip route get 8.8.8.8 | sed -n '/src/{s/.*src *\([^ ]*\).*/\1/p;q}')
+ip_public=$(curl -s http://ipv4.icanhazip.com)
+ip={{ '$ip_public' if cfupdate_using_nat_ip else '$ip_private' }}
 ip_file="ip.txt"
 id_file="cloudflare.ids"
 log_file="cloudflare.log"
