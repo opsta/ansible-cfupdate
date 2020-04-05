@@ -11,49 +11,42 @@ record_name_array=( {% for record in cfupdate_records %}"{{ record }}" {% endfor
 proxied="false"
 
 # MAYBE CHANGE THESE
-ip=$(curl -s http://ipv4.icanhazip.com)
+ip_private=$(ip route get 8.8.8.8 | sed -n '/src/{s/.*src *\([^ ]*\).*/\1/p;q}')
+ip_public=$(curl -s http://ipv4.icanhazip.com)
+ip={{ '$ip_public' if cfupdate_using_nat_ip else '$ip_private' }}
 ip_file="ip.txt"
-id_file="cloudflare.ids"
 log_file="cloudflare.log"
 
 # LOGGER
 log() {
-    if [ "$1" ]; then
-        echo -e "[$(date)] - $1" >> $log_file
-    fi
+  if [ "$1" ]; then
+    echo -e "[$(date)] - $1" >> $log_file
+  fi
 }
 
 # SCRIPT START
 log "Check Initiated"
 
+if [ -f $ip_file ]; then
+  old_ip=$(cat $ip_file)
+  if [ $ip == $old_ip ]; then
+    echo "IP has not changed."
+    exit 0
+  fi
+fi
+
 for record_name in "${record_name_array[@]}"
 do
 
   if ! [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-      message="Fetched IP does not look valid! Quitting"
-      log "$message"
-      echo -e "$message"
-      exit 1 
+    message="Fetched IP does not look valid! Quitting"
+    log "$message"
+    echo -e "$message"
+    exit 1 
   fi
 
-  if [ -f $ip_file ]; then
-      old_ip=$(cat $ip_file)
-      if [ $ip == $old_ip ]; then
-          echo "IP has not changed."
-          exit 0
-      fi
-  fi
-
-  if [ -f $id_file ] && [ $(wc -l $id_file | cut -d " " -f 1) == 2 ]; then
-      zone_identifier=$(head -1 $id_file)
-      record_identifier=$(tail -1 $id_file)
-  else
-      zone_identifier=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=$zone_name" -H "Authorization: Bearer $api_token" -H "Content-Type: application/json" | grep -Po '(?<="id":")[^"]*' | head -1 )
-      record_identifier=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$zone_identifier/dns_records?name=$record_name" -H "Authorization: Bearer $api_token" -H "Content-Type: application/json"  | grep -Po '(?<="id":")[^"]*')
-      echo "$zone_identifier" > $id_file
-      echo "$record_identifier" >> $id_file
-  fi
-
+  zone_identifier=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=$zone_name" -H "Authorization: Bearer $api_token" -H "Content-Type: application/json" | grep -Po '(?<="id":")[^"]*' | head -1 )
+  record_identifier=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$zone_identifier/dns_records?name=$record_name" -H "Authorization: Bearer $api_token" -H "Content-Type: application/json"  | grep -Po '(?<="id":")[^"]*')
   echo "zone : $zone_identifier"
   echo "record : $record_identifier"
 
@@ -66,7 +59,7 @@ do
       echo -e "$message"
       exit 1;;
     *)
-        message="IP changed to: $ip"
+      message="IP changed to: $ip"
       echo "$ip" > $ip_file
       log "$message"
       echo "$message";;

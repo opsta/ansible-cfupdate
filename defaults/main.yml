@@ -8,3 +8,7 @@
 cfupdate_service_name: cfupdate
 cfupdate_systemd_file_path: "/etc/systemd/system/{{ cfupdate_service_name }}.service"
 cfupdate_script_path: /usr/local/bin/cfupdate
+
+# If true, it will use public ip that use to access to the internet
+# If false, it will use interface ip that use to access to the internet
+cfupdate_using_nat_ip: true
