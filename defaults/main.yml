@@ -7,8 +7,12 @@
 
 cfupdate_service_name: cfupdate
 cfupdate_systemd_file_path: "/etc/systemd/system/{{ cfupdate_service_name }}.service"
-cfupdate_script_path: /usr/local/bin/cfupdate
+cfupdate_script_filename: cfupdate
+cfupdate_script_path: /usr/local/bin
 
 # If true, it will use public ip that use to access to the internet
 # If false, it will use interface ip that use to access to the internet
 cfupdate_using_nat_ip: true
+
+cfupdate_jq_download_url: https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+cfupdate_jq_filename: cfupdate-jq

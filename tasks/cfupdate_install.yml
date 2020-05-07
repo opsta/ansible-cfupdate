@@ -1,8 +1,14 @@
 ---
+- name: Install jq cli
+  get_url:
+    url: "{{ cfupdate_jq_download_url }}"
+    dest: "{{ cfupdate_script_path }}/{{ cfupdate_jq_filename }}"
+    mode: '0755'
+
 - name: Install cfupdate shell script
   template:
     src: cfupdate.j2
-    dest: "{{ cfupdate_script_path }}"
+    dest: "{{ cfupdate_script_path }}/{{ cfupdate_script_filename }}"
     mode: '0755'
 
 - name: Install cfupdate systemd service
