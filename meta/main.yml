@@ -1,5 +1,6 @@
 ---
 galaxy_info:
+  role_name: cfupdate
   author: jirayut
   description: Ansible role to install and configure Cloudflare DNS Update
   company: "Opsta (Thailand) Co., Tld."
